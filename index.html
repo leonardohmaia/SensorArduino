@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Detecção de Presença</title>
+  </head>
+  <body>
+    <main class="root">
+      <div class="card">
+        <p id="status" class="distance">Status: --</p>
+        <button onclick="iniciarComunicacaoSerial()" class="button full turn-on">
+  Iniciar Comunicação Serial
+</button>
+
+      </div>
+    </main>
+
+    <script>
+      let port;
+      let reader;
+      const baudRate = 9600;
+
+      // Função para inicializar a conexão com a porta serial
+      async function iniciarComunicacaoSerial() {
+        try {
+          // Solicitação de acesso à porta serial
+          port = await navigator.serial.requestPort();
+
+          // Abre a porta serial com a taxa de transmissão especificada
+          await port.open({ baudRate });
+
+          console.log("Conectado à porta serial");
+
+          // Obtém o leitor da porta serial
+          reader = port.readable.getReader();
+
+          // Inicia a leitura do status
+          lerStatus();
+        } catch (err) {
+          console.error("Erro ao abrir a porta serial:", err);
+
+          // Exibe informações adicionais sobre o erro, se disponíveis
+          if (err.message) {
+            console.error("Mensagem de erro:", err.message);
+          }
+        }
+      }
+
+      // Função para ler e exibir o status
+      async function lerStatus() {
+        try {
+          while (true) {
+            const { value, done } = await reader.read();
+
+            if (done) {
+              console.log("Leitura concluída");
+              break;
+            }
+
+            const status = new TextDecoder().decode(value);
+
+            console.log(status);
+
+            // Atualiza o elemento HTML com o status
+            document.getElementById("status").innerText = "Status: " + status;
+          }
+        } catch (error) {
+          console.error("Erro ao ler status:", error);
+        } finally {
+          reader.releaseLock();
+        }
+      }
+    </script>
+  </body>
+</html>
+
